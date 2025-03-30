@@ -5,7 +5,7 @@ services:
     build: ./modelo
     volumes:
       - ./modelo:/app
-      - modelo_entrenado:/app/modelo_entrenado
+      - ./modelo/modelo_entrenado:/app/modelo_entrenado
     networks:
       - digitos-network
 
@@ -15,7 +15,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - modelo_entrenado:/app/modelo_entrenado
+      - ./modelo/modelo_entrenado:/app/modelo_entrenado
     depends_on:
       - modelo
     networks:
@@ -36,9 +36,6 @@ services:
       - BACKEND_URL=http://localhost:8000
     networks:
       - digitos-network
-
-volumes:
-  modelo_entrenado:
 
 networks:
   digitos-network:
