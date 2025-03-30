@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconocimiento de Dígitos - MLP</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Reconocimiento de Dígitos con Red Neuronal</h1>
+        <p>Dibuja un dígito (0-9) en el área de dibujo y obtén la predicción del modelo.</p>
+        
+        <div class="drawing-container">
+            <canvas id="drawing-canvas" width="280" height="280"></canvas>
+            <div class="controls">
+                <button id="clear-button">Limpiar</button>
+                <button id="predict-button">Predecir</button>
+            </div>
+        </div>
+        
+        <div class="result-container">
+            <div id="loading" class="hidden">Procesando...</div>
+            <div id="result" class="hidden">
+                <h2>Predicción: <span id="prediction-result">-</span></h2>
+                <div class="confidence">
+                    <p>Confianza: <span id="confidence-value">0</span>%</p>
+                </div>
+                <div class="all-predictions">
+                    <h3>Probabilidades por dígito:</h3>
+                    <div id="probabilities-container" class="probability-bars"></div>
+                </div>
+            </div>
+            <div id="error" class="hidden">
+                <p>Error al procesar la imagen. Intenta nuevamente.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html> 

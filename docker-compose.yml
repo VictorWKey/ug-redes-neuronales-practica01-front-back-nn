@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  modelo:
+    build: ./modelo
+    volumes:
+      - ./modelo:/app
+      - modelo_entrenado:/app/modelo_entrenado
+    networks:
+      - digitos-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - modelo_entrenado:/app/modelo_entrenado
+    depends_on:
+      - modelo
+    networks:
+      - digitos-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+    networks:
+      - digitos-network
+
+volumes:
+  modelo_entrenado:
+
+networks:
+  digitos-network:
+    driver: bridge 
