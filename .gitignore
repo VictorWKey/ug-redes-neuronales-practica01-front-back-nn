@@ -49,7 +49,10 @@ logs/
 *.jpeg
 *.tiff
 *.pdf
+# Archivos JSON excepto package.json y package-lock.json
 *.json
+!package.json
+!package-lock.json
 *.csv
 
 # Docker
