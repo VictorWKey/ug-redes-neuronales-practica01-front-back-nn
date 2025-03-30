@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confidenceValue = document.getElementById('confidence-value');
     const probabilitiesContainer = document.getElementById('probabilities-container');
     
-    // URL del backend
+    // URL del backend - Será reemplazada por el servidor node.js
     const API_URL = 'http://localhost:8000';
     
     // Variables para el dibujo
@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorElement.classList.add('hidden');
         
         try {
+            console.log(`Enviando petición a: ${API_URL}/predict`);
             const response = await fetch(`${API_URL}/predict`, {
                 method: 'POST',
                 headers: {
@@ -87,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const data = await response.json();
+            console.log('Respuesta recibida:', data);
             
             // Ocultar cargando y mostrar resultados
             loadingElement.classList.add('hidden');

@@ -7,6 +7,11 @@ from PIL import Image
 import numpy as np
 import base64
 from pydantic import BaseModel
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Definir la arquitectura del modelo MLP (igual que en el script de entrenamiento)
 class DigitMLP(nn.Module):
@@ -31,10 +36,10 @@ class DigitMLP(nn.Module):
 # Crear la app de FastAPI
 app = FastAPI(title="API para Reconocimiento de Dígitos")
 
-# Configurar CORS
+# Configurar CORS de manera más permisiva
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica los dominios permitidos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,31 +60,35 @@ async def startup_event():
         model_path = "/app/modelo_entrenado/digit_mlp.pth"
         model.load_state_dict(torch.load(model_path))
         model.eval()
-        print(f"Modelo cargado correctamente desde {model_path}")
+        logger.info(f"Modelo cargado correctamente desde {model_path}")
     except Exception as e:
-        print(f"Error al cargar el modelo: {e}")
+        logger.error(f"Error al cargar el modelo: {e}")
         model = None
 
 def preprocess_image(image_data):
     # Convertir de base64 a imagen
-    image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
-    img = Image.open(io.BytesIO(image_bytes)).convert('L')
-    
-    # Redimensionar a 28x28 (tamaño esperado por MNIST)
-    img = img.resize((28, 28))
-    
-    # Convertir a tensor y normalizar
-    img_array = np.array(img, dtype=np.float32) / 255.0
-    # Invertir colores si es necesario (en MNIST, 0 es negro y 1 es blanco)
-    img_array = 1.0 - img_array  # invertir si el fondo es blanco
-    
-    # Normalizar usando la media y desviación estándar de MNIST
-    img_array = (img_array - 0.1307) / 0.3081
-    
-    # Convertir a tensor
-    tensor = torch.tensor(img_array).unsqueeze(0)  # Agregar dimensión de batch
-    
-    return tensor
+    try:
+        image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
+        img = Image.open(io.BytesIO(image_bytes)).convert('L')
+        
+        # Redimensionar a 28x28 (tamaño esperado por MNIST)
+        img = img.resize((28, 28))
+        
+        # Convertir a tensor y normalizar
+        img_array = np.array(img, dtype=np.float32) / 255.0
+        # Invertir colores si es necesario (en MNIST, 0 es negro y 1 es blanco)
+        img_array = 1.0 - img_array  # invertir si el fondo es blanco
+        
+        # Normalizar usando la media y desviación estándar de MNIST
+        img_array = (img_array - 0.1307) / 0.3081
+        
+        # Convertir a tensor
+        tensor = torch.tensor(img_array).unsqueeze(0)  # Agregar dimensión de batch
+        
+        return tensor
+    except Exception as e:
+        logger.error(f"Error en el preprocesamiento de la imagen: {e}")
+        raise
 
 @app.post("/predict")
 async def predict(data: ImageData):
@@ -87,9 +96,12 @@ async def predict(data: ImageData):
     
     # Verificar si el modelo está cargado
     if model is None:
+        logger.error("Modelo no disponible")
         raise HTTPException(status_code=500, detail="Modelo no disponible")
     
     try:
+        logger.info("Recibida solicitud de predicción")
+        
         # Preprocesar la imagen
         image_tensor = preprocess_image(data.image)
         
@@ -100,12 +112,16 @@ async def predict(data: ImageData):
             prediction = torch.argmax(output, dim=1).item()
             confidence = probabilities[0][prediction].item()
         
-        return {
+        result = {
             "prediction": prediction,
             "confidence": confidence,
             "probabilities": probabilities[0].tolist()
         }
+        
+        logger.info(f"Predicción exitosa: {prediction} con confianza {confidence:.4f}")
+        return result
     except Exception as e:
+        logger.error(f"Error al procesar la imagen: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al procesar la imagen: {str(e)}")
 
 @app.get("/health")
