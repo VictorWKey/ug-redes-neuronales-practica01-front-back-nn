@@ -10,25 +10,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const confidenceValue = document.getElementById('confidence-value');
     const probabilitiesContainer = document.getElementById('probabilities-container');
     
-    // URL del backend - Será reemplazada por el servidor node.js
     const API_URL = 'http://localhost:8000';
     
-    // Variables para el dibujo
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
     
-    // Configurar el lienzo
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = 15;
     ctx.strokeStyle = 'black';
     
-    // Fondo blanco
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Funciones de dibujo
     function startDrawing(e) {
         isDrawing = true;
         [lastX, lastY] = [e.offsetX, e.offsetY];
@@ -49,26 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
         isDrawing = false;
     }
     
-    // Función para limpiar el lienzo
     function clearCanvas() {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Ocultar resultados anteriores
         resultElement.classList.add('hidden');
         errorElement.classList.add('hidden');
     }
     
-    // Función para obtener la imagen del canvas como base64
     function getImageData() {
         return canvas.toDataURL('image/png');
     }
-    
-    // Función para enviar la imagen al backend
+
     async function predictDigit() {
         const imageData = getImageData();
         
-        // Mostrar cargando y ocultar otros elementos
         loadingElement.classList.remove('hidden');
         resultElement.classList.add('hidden');
         errorElement.classList.add('hidden');
@@ -90,17 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log('Respuesta recibida:', data);
             
-            // Ocultar cargando y mostrar resultados
             loadingElement.classList.add('hidden');
             resultElement.classList.remove('hidden');
             
-            // Mostrar la predicción
             predictionResult.textContent = data.prediction;
             confidenceValue.textContent = (data.confidence * 100).toFixed(2);
             
-            // Generar barras de probabilidad
-            displayProbabilities(data.probabilities);
-            
+            displayProbabilities(data.probabilities);       
         } catch (error) {
             console.error('Error:', error);
             loadingElement.classList.add('hidden');
@@ -108,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Función para mostrar las probabilidades como barras
     function displayProbabilities(probabilities) {
         probabilitiesContainer.innerHTML = '';
         
@@ -141,42 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Event listeners
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    // Soporte para dispositivos táctiles
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevenir el scroll
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-    
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        canvas.dispatchEvent(mouseEvent);
-    });
-    
-    canvas.addEventListener('touchend', () => {
-        const mouseEvent = new MouseEvent('mouseup', {});
-        canvas.dispatchEvent(mouseEvent);
-    });
-    
-    // Botones
     clearButton.addEventListener('click', clearCanvas);
     predictButton.addEventListener('click', predictDigit);
     
-    // Inicialización
     clearCanvas();
 }); 

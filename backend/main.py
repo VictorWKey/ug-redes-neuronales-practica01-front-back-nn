@@ -9,11 +9,9 @@ import base64
 from pydantic import BaseModel
 import logging
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Definir la arquitectura del modelo MLP (igual que en el script de entrenamiento)
 class DigitMLP(nn.Module):
     def __init__(self):
         super(DigitMLP, self).__init__()
@@ -33,25 +31,21 @@ class DigitMLP(nn.Module):
         x = self.fc3(x)
         return x
 
-# Crear la app de FastAPI
 app = FastAPI(title="API para Reconocimiento de Dígitos")
 
-# Configurar CORS de manera más permisiva
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost", "http://localhost:80"],
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type"],
 )
 
-# Modelo global
 model = None
 
 class ImageData(BaseModel):
-    image: str  # Base64 encoded image data
+    image: str
 
-# Cargar el modelo al iniciar
 @app.on_event("startup")
 async def startup_event():
     global model
@@ -66,24 +60,14 @@ async def startup_event():
         model = None
 
 def preprocess_image(image_data):
-    # Convertir de base64 a imagen
     try:
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes)).convert('L')
-        
-        # Redimensionar a 28x28 (tamaño esperado por MNIST)
         img = img.resize((28, 28))
-        
-        # Convertir a tensor y normalizar
         img_array = np.array(img, dtype=np.float32) / 255.0
-        # Invertir colores si es necesario (en MNIST, 0 es negro y 1 es blanco)
-        img_array = 1.0 - img_array  # invertir si el fondo es blanco
-        
-        # Normalizar usando la media y desviación estándar de MNIST
         img_array = (img_array - 0.1307) / 0.3081
-        
-        # Convertir a tensor
-        tensor = torch.tensor(img_array).unsqueeze(0)  # Agregar dimensión de batch
+        img_array = 1.0 - img_array
+        tensor = torch.tensor(img_array).unsqueeze(0)  
         
         return tensor
     except Exception as e:
@@ -94,18 +78,14 @@ def preprocess_image(image_data):
 async def predict(data: ImageData):
     global model
     
-    # Verificar si el modelo está cargado
     if model is None:
         logger.error("Modelo no disponible")
         raise HTTPException(status_code=500, detail="Modelo no disponible")
     
     try:
         logger.info("Recibida solicitud de predicción")
-        
-        # Preprocesar la imagen
         image_tensor = preprocess_image(data.image)
         
-        # Realizar la predicción
         with torch.no_grad():
             output = model(image_tensor)
             probabilities = torch.nn.functional.softmax(output, dim=1)
@@ -123,7 +103,3 @@ async def predict(data: ImageData):
     except Exception as e:
         logger.error(f"Error al procesar la imagen: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al procesar la imagen: {str(e)}")
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "model_loaded": model is not None} 
