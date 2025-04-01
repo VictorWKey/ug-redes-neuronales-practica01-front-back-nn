@@ -6,8 +6,6 @@ services:
     volumes:
       - ./modelo:/app
       - ./modelo/modelo_entrenado:/app/modelo_entrenado
-    networks:
-      - digitos-network
 
   backend:
     build: ./backend
@@ -18,8 +16,6 @@ services:
       - ./modelo/modelo_entrenado:/app/modelo_entrenado
     depends_on:
       - modelo
-    networks:
-      - digitos-network
 
   frontend:
     build: ./frontend
@@ -34,9 +30,3 @@ services:
       - PORT=80
       - NODE_ENV=production
       - BACKEND_URL=http://localhost:8000
-    networks:
-      - digitos-network
-
-networks:
-  digitos-network:
-    driver: bridge 

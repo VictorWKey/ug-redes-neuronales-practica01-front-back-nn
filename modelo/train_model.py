@@ -6,11 +6,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Definir la arquitectura del modelo MLP
 class DigitMLP(nn.Module):
     def __init__(self):
         super(DigitMLP, self).__init__()
-        # Arquitectura simple de MLP para MNIST
         self.flatten = nn.Flatten()
         self.fc1 = nn.Linear(28*28, 128)
         self.relu1 = nn.ReLU()
@@ -28,26 +26,30 @@ class DigitMLP(nn.Module):
         return x
 
 def train_model():
-    # Configurar transformaciones para el dataset
+    model_path = '/app/modelo_entrenado/digit_mlp.pth'
+    metrics_path = '/app/modelo_entrenado/training_metrics.png'
+    
+    if os.path.exists(model_path):
+        print(f"El modelo ya existe en '{model_path}'.")
+        print("Para reentrenar el modelo, elimine manualmente los archivos existentes o use la opción de forzar reentrenamiento.")
+        return
+    
+    print("Iniciando el entrenamiento del modelo...")
+    
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    # Cargar dataset de MNIST
     train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
     test_dataset = datasets.MNIST('./data', train=False, transform=transform)
-    
-    # Crear dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1000)
     
-    # Inicializar modelo, función de pérdida y optimizador
     model = DigitMLP()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
-    # Entrenamiento
     epochs = 5
     train_losses = []
     test_accuracies = []
@@ -86,13 +88,10 @@ def train_model():
         
         print(f'Epoch: {epoch+1}/{epochs}, Train Loss: {avg_loss:.4f}, Test Accuracy: {accuracy:.2f}%')
     
-    # Crear directorio para guardar el modelo
     os.makedirs('/app/modelo_entrenado', exist_ok=True)
     
-    # Guardar el modelo
-    torch.save(model.state_dict(), '/app/modelo_entrenado/digit_mlp.pth')
+    torch.save(model.state_dict(), model_path)
     
-    # Guardar un ejemplo para visualización
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
     plt.plot(train_losses)
@@ -107,10 +106,10 @@ def train_model():
     plt.ylabel('Accuracy (%)')
     
     plt.tight_layout()
-    plt.savefig('/app/modelo_entrenado/training_metrics.png')
+    plt.savefig(metrics_path)
     
-    print(f"Modelo guardado en '/app/modelo_entrenado/digit_mlp.pth'")
-    print(f"Métricas de entrenamiento guardadas en '/app/modelo_entrenado/training_metrics.png'")
+    print(f"Modelo guardado en '{model_path}'")
+    print(f"Métricas de entrenamiento guardadas en '{metrics_path}'")
 
 if __name__ == "__main__":
     train_model() 
