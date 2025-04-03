@@ -71,7 +71,6 @@ def train_model(force_retrain=False):
     test_f1_scores = []
     
     for epoch in range(epochs):
-        # Entrenamiento
         model.train()
         running_loss = 0.0
         correct = 0
@@ -105,8 +104,7 @@ def train_model(force_retrain=False):
         train_losses.append(avg_train_loss)
         train_accuracies.append(train_accuracy)
         train_f1_scores.append(train_f1)
-        
-        # Evaluación
+
         model.eval()
         test_loss = 0
         correct = 0
@@ -137,13 +135,10 @@ def train_model(force_retrain=False):
         print(f'Train Loss: {avg_train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%, Train F1: {train_f1:.4f}')
         print(f'Test Loss: {avg_test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%, Test F1: {test_f1:.4f}')
     
-    # Guardar el modelo
     torch.save(model.state_dict(), model_path)
     
-    # Generar y guardar métricas
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Matriz de confusión
     cm = confusion_matrix(all_test_targets, all_test_preds)
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
@@ -153,7 +148,6 @@ def train_model(force_retrain=False):
     plt.savefig(os.path.join(metrics_dir, f'confusion_matrix_{timestamp}.png'))
     plt.close()
     
-    # Gráficas de pérdida y precisión
     plt.figure(figsize=(15, 5))
     
     plt.subplot(1, 3, 1)
@@ -184,7 +178,6 @@ def train_model(force_retrain=False):
     plt.savefig(os.path.join(metrics_dir, f'training_metrics_{timestamp}.png'))
     plt.close()
     
-    # Guardar métricas en JSON
     metrics = {
         'final_train_loss': train_losses[-1],
         'final_test_loss': test_losses[-1],

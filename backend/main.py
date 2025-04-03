@@ -8,6 +8,7 @@ import numpy as np
 import base64
 from pydantic import BaseModel
 import logging
+from torchvision import transforms
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -64,10 +65,18 @@ def preprocess_image(image_data):
         image_bytes = base64.b64decode(image_data.split(',')[1] if ',' in image_data else image_data)
         img = Image.open(io.BytesIO(image_bytes)).convert('L')
         img = img.resize((28, 28))
+        
         img_array = np.array(img, dtype=np.float32) / 255.0
-        img_array = (img_array - 0.1307) / 0.3081
+        
         img_array = 1.0 - img_array
-        tensor = torch.tensor(img_array).unsqueeze(0)  
+        
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        
+        img = Image.fromarray((img_array * 255).astype(np.uint8))
+        tensor = transform(img).unsqueeze(0)
         
         return tensor
     except Exception as e:
